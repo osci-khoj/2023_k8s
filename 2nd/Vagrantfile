@@ -1,0 +1,49 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+## configuration variables ##
+# max number of worker nodes
+N = 3 
+# each of components to install 
+k8s_V = '1.25.0'  
+## /configuration variables ##
+
+Vagrant.configure("2") do |config|
+  
+  #=============#
+  # Master Node #
+  #=============#
+
+    config.vm.define "m-k8s-#{k8s_V[0..5]}" do |cfg|
+      cfg.vm.box = "ubuntu/focal64"
+      cfg.vm.provider "virtualbox" do |vb|
+        vb.name = "m-k8s-#{k8s_V[0..5]}"
+        vb.cpus = 2
+        vb.memory = 1746
+      end
+      cfg.vm.host_name = "m-k8s"
+      cfg.vm.network "private_network", ip: "192.168.1.10"
+      cfg.vm.network "forwarded_port", guest: 22, host: 2222, auto_correct: true, id: "ssh"
+      cfg.vm.network "forwarded_port", guest: 80, host: 8888, auto_correct: true, id: "ssh"
+    end
+
+  #==============#
+  # Worker Nodes #
+  #==============#
+
+  (1..N).each do |i|
+    config.vm.define "w#{i}-k8s-#{k8s_V[0..5]}" do |cfg|
+      cfg.vm.box = "ubuntu/focal64"
+      cfg.vm.provider "virtualbox" do |vb|
+        vb.name = "w#{i}-k8s-#{k8s_V[0..5]}"
+        vb.cpus = 1
+        vb.memory = 1024
+      end
+      cfg.vm.host_name = "w#{i}-k8s"
+      cfg.vm.network "private_network", ip: "192.168.1.10#{i}"
+      cfg.vm.network "forwarded_port", guest: 22, host: "2222#{i}", auto_correct: true, id: "ssh"
+      cfg.vm.network "forwarded_port", guest: 80, host: "8888#{i}", auto_correct: true, id: "ssh"
+    end
+  end
+
+end
